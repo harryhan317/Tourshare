@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅行美学助手 - 创作你的旅行故事</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f8f8;
+            color: #000;
+            line-height: 1.6;
+            padding-bottom: 120px;
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-back, .navbar-help {
+            font-size: 18px;
+            color: #07C160;
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .navbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #000;
+        }
+
+        /* 9宫格样式 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .grid-item {
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .grid-item.add-btn {
+            border: 2px dashed #ddd;
+            background: #fafafa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-item.add-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .grid-item.dragging {
+            opacity: 0.6;
+            transform: scale(1.05);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .grid-item.drop-zone {
+            background: #e8f5e8;
+            border: 2px dashed #07C160;
+        }
+
+        .add-icon {
+            font-size: 24px;
+            color: #999;
+        }
+
+        .grid-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .grid-item .remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .grid-item:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .batch-upload {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .btn-batch {
+            padding: 10px 20px;
+            background: #07C160;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-batch:hover {
+            background: #06ae56;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .setting-label {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            color: #000;
+        }
+
+        .info-icon {
+            width: 18px;
+            height: 18px;
+            border: 1px solid #999;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #999;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+
+        .segmented-control {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 3px;
+        }
+
+        .segment {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-align: center;
+            flex: 1;
+        }
+
+        .segment.active {
+            background: #07C160;
+            color: #fff;
+        }
+
+        .picker {
+            padding: 12px 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #07C160;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 12px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #000;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .btn-generate {
+            width: 100%;
+            padding: 14px;
+            background: #07C160;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .btn-generate:hover {
+            background: #06ae56;
+        }
+
+        .btn-generate:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .suggestion-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .suggestion-box.show {
+            display: flex;
+        }
+
+        .suggestion-box input {
+            flex: 1;
+            padding: 12px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            font-size: 13px;
+            border: 1px solid #eee;
+        }
+
+        .btn-submit-suggestion {
+            padding: 0 20px;
+            background: #07C160;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .text-edit-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .text-edit-box textarea {
+            width: 100%;
+            height: 150px;
+            padding: 16px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px solid #eee;
+            resize: vertical;
+        }
+
+        .word-count {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .word-count.over-limit {
+            color: #e64340;
+        }
+
+        .bottom-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: #fff;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: #07C160;
+            color: #fff;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #06ae56;
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .info-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .info-modal.show {
+            display: flex;
+        }
+
+        .info-content {
+            width: 300px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .info-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .word-count-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .word-count-modal.show {
+            display: flex;
+        }
+
+        .word-count-content {
+            width: 280px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .word-count-option {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .word-count-option:hover {
+            background: #f8f8f8;
+        }
+
+        .word-count-option:last-child {
+            border-bottom: none;
+        }
+
+        .word-count-custom {
+            padding: 12px;
+            border-top: 1px solid #eee;
+        }
+
+        .word-count-custom input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        #file-input, #batch-file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <button class="navbar-back" onclick="goBack()">〈</button>
+        <div class="navbar-title">创作旅行故事</div>
+        <button class="navbar-help">···</button>
+    </div>
+
+    <div class="section">
+        <div class="section-title">选择图片（最多9张）</div>
+        <div class="grid-container" id="image-grid">
+            <!-- 9宫格将通过JS动态生成 -->
+        </div>
+        <div class="batch-upload">
+            <button class="btn-batch" onclick="batchUploadImages()">批量导入图片</button>
+        </div>
+        <input type="file" id="file-input" accept="image/*">
+        <input type="file" id="batch-file-input" accept="image/*" multiple>
+    </div>
+
+    <!-- 其他部分保持不变 -->
+    <div class="section">
+        <div class="section-title">AI文案设置</div>
+        
+        <div class="setting-item">
+            <div class="setting-label">
+                文案风格
+                <div class="info-icon" onclick="showInfo('风格')">i</div>
+            </div>
+            <div class="segmented-control">
+                <div class="segment active" data-value="文艺" onclick="changeStyle(this)">文艺</div>
+                <div class="segment" data-value="幽默" onclick="changeStyle(this)">幽默</div>
+                <div class="segment" data-value="简洁" onclick="changeStyle(this)">简洁</div>
+            </div>
+        </div>
+
+        <div class="setting-item">
+            <div class="setting-label">
+                <span>😊 添加Emoji</span>
+                <div class="info-icon" onclick="showInfo('Emoji')">i</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked onchange="toggleEmoji(this)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="setting-item">
+            <div class="setting-label">
+                文案字数
+                <div class="info-icon" onclick="showInfo('字数')">i</div>
+            </div>
+            <div class="picker" onclick="showWordCountOptions()">
+                <span id="word-count-display">50字</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">AI文案创作</div>
+        
+        <button class="btn-generate" onclick="generateAIText()" id="generate-button">
+            🎨 生成文案
+        </button>
+        
+        <div class="text-edit-box">
+            <textarea id="generated-text" placeholder="点击上方"生成文案"按钮，AI将根据您选择的图片生成精彩文案..." 
+                      maxlength="200" oninput="updateTextLength(this)"></textarea>
+            <div class="word-count" id="word-count">0/200</div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-secondary" onclick="rewriteText()">🔄 重写文案</button>
+            <button class="btn-secondary" onclick="toggleSuggestion()" id="suggestion-toggle">💡 优化建议</button>
+        </div>
+
+        <div class="suggestion-box" id="suggestion-box">
+            <input type="text" placeholder="例如：更浪漫一些 / 突出雪山 / 加点历史故事..." id="suggestion-input">
+            <button class="btn-submit-suggestion" onclick="submitSuggestion()">提交</button>
+        </div>
+    </div>
+
+    <div class="bottom-actions">
+        <button class="btn-primary" onclick="generateAndSave()" id="save-button">
+            ✅ 生成并保存至相册
+        </button>
+    </div>
+
+    <!-- 模态窗口保持不变 -->
+    <div class="info-modal" id="info-modal">
+        <div class="info-content">
+            <div class="info-close" onclick="hideInfo()">×</div>
+            <div class="info-title" id="info-title">标题</div>
+            <div class="info-body" id="info-content">内容</div>
+        </div>
+    </div>
+
+    <div class="word-count-modal" id="word-count-modal">
+        <div class="word-count-content">
+            <div class="word-count-option" onclick="selectWordCount(50)">50字</div>
+            <div class="word-count-option" onclick="selectWordCount(100)">100字</div>
+            <div class="word-count-option" onclick="selectWordCount(150)">150字</div>
+            <div class="word-count-option" onclick="selectWordCount(200)">200字</div>
+            <div class="word-count-custom">
+                <input type="number" id="custom-word-count" placeholder="输入20-200之间的数字" min="20" max="200">
+                <button onclick="applyCustomWordCount()" style="margin-top: 8px; width: 100%; padding: 8px; background: #07C160; color: white; border: none; border-radius: 6px; cursor: pointer;">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const appState = {
+            images: Array(9).fill(null), // 用数组记录每个位置的图片
+            textStyle: '文艺',
+            useEmoji: true,
+            wordCount: 50,
+            generatedText: '',
+            showSuggestion: false,
+            draggingIndex: -1
+        };
+
+        // 初始化9宫格
+        document.addEventListener('DOMContentLoaded', function() {
+            initImageGrid();
+            updateSaveButton();
+        });
+
+        function initImageGrid() {
+            const imageGrid = document.getElementById('image-grid');
+            imageGrid.innerHTML = '';
+            
+            // 创建9个格子
+            for (let i = 0; i < 9; i++) {
+                const gridItem = document.createElement('div');
+                gridItem.className = 'grid-item add-btn';
+                gridItem.innerHTML = '<div class="add-icon">+</div>';
+                gridItem.setAttribute('data-index', i);
+                
+                // 点击空白格子选择图片
+                gridItem.onclick = function() {
+                    if (!appState.images[i]) {
+                        document.getElementById('file-input').setAttribute('data-target-index', i);
+                        document.getElementById('file-input').click();
+                    }
+                };
+                
+                // 拖拽相关事件
+                gridItem.addEventListener('dragstart', handleDragStart);
+                gridItem.addEventListener('dragover', handleDragOver);
+                gridItem.addEventListener('drop', handleDrop);
+                gridItem.addEventListener('dragenter', handleDragEnter);
+                gridItem.addEventListener('dragleave', handleDragLeave);
+                
+                imageGrid.appendChild(gridItem);
+            }
+        }
+
+        function batchUploadImages() {
+            document.getElementById('batch-file-input').click();
+        }
+
+        // 处理批量导入
+        document.getElementById('batch-file-input').addEventListener('change', function(event) {
+            const files = event.target.files;
+            let fileIndex = 0;
+            
+            // 按顺序填充空白位置
+            for (let i = 0; i < 9 && fileIndex < files.length; i++) {
+                if (!appState.images[i]) {
+                    const file = files[fileIndex];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        appState.images[i] = e.target.result;
+                        updateGridItem(i, e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                    fileIndex++;
+                }
+            }
+        });
+
+        // 处理单个图片选择
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                const targetIndex = parseInt(this.getAttribute('data-target-index'));
+                const file = files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    appState.images[targetIndex] = e.target.result;
+                    updateGridItem(targetIndex, e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function updateGridItem(index, imageData) {
+            const gridItems = document.querySelectorAll('.grid-item');
+            const gridItem = gridItems[index];
+            
+            gridItem.className = 'grid-item';
+            gridItem.innerHTML = `
+                <img src="${imageData}" alt="旅行图片" draggable="true">
+                <div class="remove-btn" onclick="removeImage(${index})">×</div>
+            `;
+            
+            // 重新绑定拖拽事件
+            gridItem.addEventListener('dragstart', handleDragStart);
+            gridItem.addEventListener('dragover', handleDragOver);
+            gridItem.addEventListener('drop', handleDrop);
+            gridItem.addEventListener('dragenter', handleDragEnter);
+            gridItem.addEventListener('dragleave', handleDragLeave);
+        }
+
+        function removeImage(index) {
+            event.stopPropagation();
+            appState.images[index] = null;
+            
+            const gridItems = document.querySelectorAll('.grid-item');
+            const gridItem = gridItems[index];
+            
+            gridItem.className = 'grid-item add-btn';
+            gridItem.innerHTML = '<div class="add-icon">+</div>';
+            
+            // 重新绑定点击事件
+            gridItem.onclick = function() {
+                document.getElementById('file-input').setAttribute('data-target-index', index);
+                document.getElementById('file-input').click();
+            };
+        }
+
+        // 拖拽功能
+        function handleDragStart(e) {
+            const index = parseInt(this.getAttribute('data-index'));
+            if (appState.images[index]) {
+                appState.draggingIndex = index;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            return false;
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetIndex = parseInt(this.getAttribute('data-index'));
+            
+            if (appState.draggingIndex !== -1 && appState.draggingIndex !== targetIndex) {
+                // 交换图片
+                [appState.images[appState.draggingIndex], appState.images[targetIndex]] = 
+                [appState.images[targetIndex], appState.images[appState.draggingIndex]];
+                
+                // 更新UI
+                updateGridFromState();
+            }
+            
+            this.classList.remove('drop-zone');
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('drop-zone');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drop-zone');
+        }
+
+        function updateGridFromState() {
+            const gridItems = document.querySelectorAll('.grid-item');
+            
+            for (let i = 0; i < 9; i++) {
+                if (appState.images[i]) {
+                    updateGridItem(i, appState.images[i]);
+                } else {
+                    const gridItem = gridItems[i];
+                    gridItem.className = 'grid-item add-btn';
+                    gridItem.innerHTML = '<div class="add-icon">+</div>';
+                    gridItem.onclick = function() {
+                        document.getElementById('file-input').setAttribute('data-target-index', i);
+                        document.getElementById('file-input').click();
+                    };
+                }
+            }
+        }
+
+        // 其他函数保持不变（generateAIText, changeStyle, toggleEmoji等）
+        function generateAIText() {
+            const textArea = document.getElementById('generated-text');
+            const generateButton = document.getElementById('generate-button');
+            
+            // 检查是否有图片
+            const hasImages = appState.images.some(img => img !== null);
+            if (!hasImages) {
+                alert('请先选择图片');
+                return;
+            }
+            
+            generateButton.disabled = true;
+            generateButton.textContent = 'AI正在思考...';
+            
+            setTimeout(() => {
+                const sampleTexts = {
+                    '文艺': '漫步在这片神奇的土地上，每一帧风景都如诗如画。远山含黛，近水如镜，时光在这里仿佛放慢了脚步。让心灵在旅途中得到真正的栖息，感受生命最本真的美好。',
+                    '幽默': '哈哈，这次旅行真是笑料百出！从迷路到爆胎，从饿肚子到晒成小黑炭，但这一切都成了最珍贵的回忆。旅行嘛，就是要有点意外才精彩！',
+                    '简洁': '美好的旅程，难忘的回忆。山川湖海，尽收眼底。放松心情，享受当下。'
+                };
+                
+                let text = sampleTexts[appState.textStyle];
+                if (appState.useEmoji) {
+                    text += ' 🌄✨🚗';
+                }
+                
+                textArea.value = text;
+                appState.generatedText = text;
+                updateTextLength(textArea);
+                
+                generateButton.disabled = false;
+                generateButton.textContent = '🎨 生成文案';
+            }, 2000);
+        }
+
+        function changeStyle(element) {
+            const segments = document.querySelectorAll('.segment');
+            segments.forEach(seg => seg.classList.remove('active'));
+            element.classList.add('active');
+            appState.textStyle = element.getAttribute('data-value');
+        }
+
+        function toggleEmoji(checkbox) {
+            appState.useEmoji = checkbox.checked;
+        }
+
+        function showWordCountOptions() {
+            document.getElementById('word-count-modal').classList.add('show');
+        }
+
+        function selectWordCount(count) {
+            appState.wordCount = count;
+            document.getElementById('word-count-display').textContent = count + '字';
+            document.getElementById('word-count-modal').classList.remove('show');
+        }
+
+        function applyCustomWordCount() {
+            const input = document.getElementById('custom-word-count');
+            const count = parseInt(input.value);
+            
+            if (!isNaN(count) && count >= 20 && count <= 200) {
+                selectWordCount(count);
+            } else {
+                alert('请输入20-200之间的数字');
+            }
+        }
+
+        function rewriteText() {
+            if (!appState.generatedText) {
+                alert('请先生成文案');
+                return;
+            }
+            generateAIText();
+        }
+
+        function toggleSuggestion() {
+            const suggestionBox = document.getElementById('suggestion-box');
+            const toggleButton = document.getElementById('suggestion-toggle');
+            
+            appState.showSuggestion = !appState.showSuggestion;
+            
+            if (appState.showSuggestion) {
+                suggestionBox.classList.add('show');
+                toggleButton.textContent = '收起建议';
+            } else {
+                suggestionBox.classList.remove('show');
+                toggleButton.textContent = '💡 优化建议';
+            }
+        }
+
+        function submitSuggestion() {
+            const suggestionInput = document.getElementById('suggestion-input');
+            const suggestion = suggestionInput.value.trim();
+            
+            if (suggestion) {
+                alert(`已提交优化建议: "${suggestion}"\nAI将根据您的建议重新生成文案。`);
+                suggestionInput.value = '';
+                generateAIText();
+            } else {
+                alert('请输入优化建议');
+            }
+        }
+
+        function updateTextLength(textarea) {
+            const length = textarea.value.length;
+            const wordCountElement = document.getElementById('word-count');
+            
+            wordCountElement.textContent = length + '/200';
+            
+            if (length > 200) {
+                wordCountElement.classList.add('over-limit');
+            } else {
+                wordCountElement.classList.remove('over-limit');
+            }
+            
+            updateSaveButton();
+        }
+
+        function updateSaveButton() {
+            const saveButton = document.getElementById('save-button');
+            const textLength = document.getElementById('generated-text').value.length;
+            
+            saveButton.disabled = textLength > 200 || textLength === 0;
+        }
+
+        function generateAndSave() {
+            alert('图片已生成并保存到虚拟相册！\n请打开朋友圈分享您的旅行故事。');
+        }
+
+        function showInfo(type) {
+            const modal = document.getElementById('info-modal');
+            const title = document.getElementById('info-title');
+            const content = document.getElementById('info-content');
+            
+            const infoMap = {
+                '风格': '选择AI生成文案的整体语调与风格。',
+                'Emoji': '开启后，AI会在文案中自动插入合适的表情符号。',
+                '字数': '为AI生成设定一个大致的字数目标。您仍可在下方输入框中自由编辑。'
+            };
+            
+            title.textContent = type;
+            content.textContent = infoMap[type];
+            modal.classList.add('show');
+        }
+
+        function hideInfo() {
+            document.getElementById('info-modal').classList.remove('show');
+            document.getElementById('word-count-modal').classList.remove('show');
+        }
+
+        function goBack() {
+            if (confirm('确定要离开吗？您的编辑内容将不会被保存。')) {
+                alert('返回上一页');
+            }
+        }
+    </script>
+</body>
+</html>
